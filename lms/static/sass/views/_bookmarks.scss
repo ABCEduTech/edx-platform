@@ -132,10 +132,10 @@
 // Rules for bookmark icon shown on each sequence nav item
 .course-content {
 
-   .bookmark-icon.bookmarked {
+  .bookmark-icon.bookmarked {
+    @include right($baseline / 4);
     top: -3px;
     position: absolute;
-    left: ($baseline/4);
   }
 
 
