@@ -3,7 +3,6 @@ from datetime import datetime
 import urllib
 
 from pytz import UTC
-from django.conf import settings
 from django.core.urlresolvers import reverse, NoReverseMatch
 from oauth2_provider.models import (
     AccessToken as dot_access_token,
@@ -133,8 +132,7 @@ def check_verify_status_by_course(user, course_enrollments):
             if status is None and not submitted:
                 if deadline is None or deadline > datetime.now(UTC):
                     if SoftwareSecurePhotoVerification.user_is_verified(user):
-                        if (expiration_datetime - datetime.now(UTC)).days <= settings.VERIFY_STUDENT.get(
-                                "VERIFICATION_EXPIRATION_DAYS", 28):
+                        if SoftwareSecurePhotoVerification.is_verification_expiring_soon(expiration_datetime):
                             # The user has an active verification, but the verification
                             # is set to expire within "VERIFICATION_EXPIRATION_DAYS" days (default is 4 weeks).
                             # Tell the student to reverify.

@@ -275,9 +275,9 @@ class PhotoVerification(StatusModel):
         if queryset is None:
             queryset = cls.objects.filter(user=user)
 
-        queryset = queryset.filter(status='approved').order_by('-updated_at')
-        if queryset:
-            return queryset[0].expiration_datetime
+        photo_verification = queryset.filter(status='approved').first()
+        if photo_verification:
+            return photo_verification.expiration_datetime
 
     @classmethod
     def user_has_valid_or_pending(cls, user, earliest_allowed_date=None, queryset=None):
@@ -965,6 +965,17 @@ class SoftwareSecurePhotoVerification(PhotoVerification):
             return 'Not ID Verified'
         else:
             return 'ID Verified'
+
+    @classmethod
+    def is_verification_expiring_soon(cls, expiration_datetime):
+        """
+        Returns True if verification is expiring within VERIFICATION_EXPIRATION_DAYS.
+        """
+        if (expiration_datetime - datetime.now(pytz.UTC)).days <= settings.VERIFY_STUDENT.get(
+                "VERIFICATION_EXPIRATION_DAYS", 28):
+            return True
+        else:
+            return False
 
 
 class VerificationDeadline(TimeStampedModel):
