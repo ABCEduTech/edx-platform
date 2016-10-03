@@ -63,7 +63,7 @@ class CoursePersistentGradesFlag(ConfigurationModel):
         app_label = "grades"
 
     # The course that these features are attached to.
-    course_id = CourseKeyField(max_length=255, db_index=True, unique=True)
+    course_id = CourseKeyField(max_length=255, db_index=True)
 
     def __unicode__(self):
         not_en = "Not "
