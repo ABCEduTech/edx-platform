@@ -32,13 +32,14 @@ else:
                         span_start=HTML('<span class="sr">'),
                         span_end=HTML('</span>'),
                     ) if 'active' in section and section['active'] else ''}</p>
-                <%
-                if section.get('due') is None:
-                    due_date = ''
-                else:
-                    formatted_string = get_time_display(section['due'], due_date_display_format, coerce_tz=time_zone)
-                    due_date = '' if len(formatted_string)==0 else _('due {date}').format(date=formatted_string)
-                %>
+
+##                 <%
+##                 if section.get('due') is None:
+##                     due_date = ''
+##                 else:
+##                     formatted_string = get_time_display(section['due'], due_date_display_format, coerce_tz=time_zone)
+##                     due_date = '' if len(formatted_string)==0 else _('due {date}').format(date=formatted_string)
+##                 %>
 
                 ## There is behavior differences between
                 ## rendering of sections which have proctoring/timed examinations
@@ -57,12 +58,13 @@ else:
                         ## completed proctored exam statuses should not show the due date
                         ## since the exam has already been submitted by the user
                         % if not section['proctoring'].get('in_completed_state', False):
-                            <span class="subtitle-name">${due_date}</span>
+                            <span class="subtitle-name localized-datetime" lang="${language}" data-time_zone="${time_zone}" data-datetime="${section['due']}"></span>
                         % endif
                     % else:
                         ## non-proctored section, we just show the exam format and the due date
                         ## this is the standard case in edx-platform
-                        <span class="subtitle-name">${section['format']} ${due_date}</span>
+                        <span class="subtitle-name localized-datetime" lang="${language}" data-timezone="${time_zone}" data-datetime="${section['due']}"></span>
+                        ## <!-- data-string="${section.format}"-->
 
                         % if 'graded' in section and section['graded']:
                             <span class="menu-icon icon fa fa-pencil-square-o" aria-hidden="true"></span>
@@ -86,5 +88,11 @@ else:
 % if toc:
     <%static:require_module_async module_name="js/courseware/accordion_events" class_name="AccordionEvents">
         AccordionEvents();
+    </%static:require_module_async>
+% endif
+
+% if toc:
+    <%static:require_module_async module_name="js/datedisplay-helper" class_name="DateDisplay">
+        DateDisplay();
     </%static:require_module_async>
 % endif

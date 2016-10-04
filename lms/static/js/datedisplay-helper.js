@@ -22,34 +22,67 @@
 
     define([
         'jquery',
-        'edx-ui-toolkit/js/utils/date-utils',
-        'edx-ui-toolkit/js/utils/string-utils'
+        'edx-ui-toolkit/js/utils/date-utils'
     ], function(
         $,
-        DateUtils,
-        StringUtils
+        DateUtils
         ) {
         return function() {
             var displayTime;
             var displayString;
             $('.localized-datetime').each(function() {
-                console.log('HERE')
-            //     var context = {
-            //         datetime: $(this).data('time_zone'),
-            //         timezone: $(this).data('datetime'),
-            //         language: $(this).data('language'),
-            //         format: $(this).data('format')
-            //     }
-            //     displayTime = DateUtils.localize(context);
-            //     // LOAD DATA
+                if ($(this).data('datetime') !== 'None' && $(this).data('datetime') !== undefined) {
+                    // var context = {
+                    //     datetime: $(this).data('datetime'),
+                    //     // timezone: String($(this).data('datetime')),
+                    //     // language: $(this).attr('lang'),
+                    //     // format: $(this).data('format')
+                    // }
+                    // console.log(context)
+                    // console.log($(this).data('datetime'))
+                    // console.log(moment($(this).data('datetime')).tz($(this).data('timezone')))
+                    displayTime = DateUtils.stringToMoment($(this).data('datetime'));
+                    var d2 = DateUtils.localizeTime(displayTime)
+                    console.log(d2)
+                }
+
+                // // console.log('HERE')
+                // console.log($(this).data('timezone'))
+                // console.log($(this).attr('lang'))
+                // console.log($(this).data('format'))
+                // // console.log()
+                //
+                //     console.log('HERE')
+                // var context = {
+                //     datetime: String($(this).data('timezone')),
+                //     timezone: String($(this).data('datetime')),
+                //     language: $(this).attr('lang'),
+                //     format: $(this).data('format')
+                // };
+                // displayTime = DateUtils.localize(context);
+                // console.log(displayTime)
+                // }
+
+                // LOAD DATA
             // if ($(this).data('string') !== undefined && $(this).data('string').length > 0) {
             //     displayString = StringUtils.interpolate(
             //         $(this).data('string'), {date: displayTime}
             //     );
             // } else {
-            //     displayString = displayTime;
+
+ //                 * var context = {
+ // *    datetime: '2016-10-14 08:00:00+00:00',
+ // *    timezone: 'Pacific/Kiritimati',
+ // *    language: 'ar',
+ // *    format: DateUtils.dateFormats.shortDate
+ // * };
+
+
+
+
+                displayString = displayTime;
             // }
-            //      $(this).text(displayTime);
+                 $(this).text(displayString);
             });
         };
     });
