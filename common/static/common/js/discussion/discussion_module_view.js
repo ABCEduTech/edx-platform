@@ -82,6 +82,8 @@ NewPostView */
                 }
             };
 
+
+
             DiscussionModuleView.prototype.toggleNewPost = function(event) {
                 event.preventDefault();
                 if (!this.newPostForm) {
