@@ -67,3 +67,25 @@ class PersistentGradesFeatureFlagTests(TestCase):
                 enabled_for_course=False
             ):
                 self.assertFalse(PersistentGradesEnabledFlag.feature_enabled(self.course_id_1))
+
+    def test_enable_disable_globally(self):
+        """
+        Ensures that the flag, once enabled globally, can also be disabled.
+        """
+        with persistent_grades_feature_flags(
+            global_flag=True,
+            enabled_for_all_courses=True,
+        ):
+            self.assertTrue(PersistentGradesEnabledFlag.feature_enabled())
+            self.assertTrue(PersistentGradesEnabledFlag.feature_enabled(self.course_id_1))
+            with persistent_grades_feature_flags(
+                global_flag=True,
+                enabled_for_all_courses=False,
+            ):
+                self.assertTrue(PersistentGradesEnabledFlag.feature_enabled())
+                self.assertFalse(PersistentGradesEnabledFlag.feature_enabled(self.course_id_1))
+                with persistent_grades_feature_flags(
+                    global_flag=False,
+                ):
+                    self.assertFalse(PersistentGradesEnabledFlag.feature_enabled())
+                    self.assertFalse(PersistentGradesEnabledFlag.feature_enabled(self.course_id_1))
