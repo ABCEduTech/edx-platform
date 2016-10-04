@@ -919,7 +919,6 @@ div.problem .action {
 
     @media (min-width: $bp-screen-lg) {
       @include right($baseline * 1.5);
-      margin-top: -$baseline / 2;
       position: absolute;
     }
 
@@ -957,14 +956,10 @@ div.problem .action {
     -webkit-font-smoothing: antialiased;
     vertical-align: middle;
 
-    @media (min-width: $bp-screen-lg) and (max-width: $bp-screen-xl) {
+    @media (min-width: $bp-screen-lg) {
       @include margin-left(0);
       margin-top: $baseline / 2;
       display: block;
-    }
-
-    @media (min-width: $bp-screen-xl) {
-      max-width: flex-grid(3, 10);
     }
 
   }
