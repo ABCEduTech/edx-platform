@@ -10,11 +10,13 @@ import json
 from django.db.utils import IntegrityError
 from django.test import TestCase
 from opaque_keys.edx.locator import CourseLocator, BlockUsageLocator
+from xmodule_django.models import CourseKeyField
 
 from lms.djangoapps.grades.models import (
     BlockRecord,
     BlockRecordList,
     BLOCK_RECORD_LIST_VERSION,
+    PersistentCourseGrade,
     PersistentSubsectionGrade,
     VisibleBlocks
 )
@@ -238,3 +240,46 @@ class PersistentSubsectionGradeTest(GradesModelTestCase):
         if already_created:
             self.assertEquals(created_grade.id, updated_grade.id)
             self.assertEquals(created_grade.earned_all, 6)
+
+
+@ddt.ddt
+class PersistentCourseGradesTest(GradesModelTestCase):
+    """
+    Tests the PersistentCourseGrade model.
+    """
+    def setUp(self):
+        super(PersistentCourseGradesTest, self).setUp()
+        self.block_records = BlockRecordList([self.record_a, self.record_b], self.course_key)
+        self.params = {
+            "user_id": 12345,
+            "course_id": self.course_key,
+            "course_version": "JoeMcEwing",
+            "subtree_edited_timestamp": "2016-08-01 18:53:24.354741",
+            "percent_grade": "77.7",
+            "letter_grade": "Great job",
+        }
+
+    @ddt.data(True, False)
+    def test_update_or_create(self, already_created):
+        created_grade = PersistentCourseGrade.objects.create(**self.params) if already_created else None
+        self.params["percent_grade"] = 88.8
+        self.params["letter_grade"] = "Better job"
+        updated_grade = PersistentCourseGrade.update_or_create_course_grade(**self.params)
+        self.assertEquals(updated_grade.percent_grade, 88.8)
+        self.assertEquals(updated_grade.letter_grade, "Better job")
+        if already_created:
+            self.assertEqual(created_grade.id, updated_grade.id)
+
+    @ddt.data(
+        ("percent_grade", "Not a float at all", ValueError),
+        ("percent_grade", None, IntegrityError),
+        ("letter_grade", None, IntegrityError),
+        ("course_id", "Not a course key at all", AssertionError),
+        ("user_id", None, IntegrityError),
+        ("grading_policy_hash", None, IntegrityError)
+    )
+    @ddt.unpack
+    def test_update_or_create_bad_params(self, param, val, error):
+        self.params[param] = val
+        with self.assertRaises(error):
+            PersistentCourseGrade.update_or_create_course_grade(**self.params)

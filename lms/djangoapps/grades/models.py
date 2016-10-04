@@ -2,7 +2,9 @@
 Models used for robust grading.
 
 Robust grading allows student scores to be saved per-subsection independent
-of any changes that may occur to the course after the score is achieved.
+of any changes that may occur to the course after the score is achieved, and
+for course grades to be saved in the same manner except for grading policy
+updates.
 """
 
 from base64 import b64encode
@@ -363,3 +365,76 @@ class PersistentSubsectionGrade(TimeStampedModel):
         """
         params['visible_blocks_id'] = params['visible_blocks'].hash_value
         del params['visible_blocks']
+
+
+class PersistentCourseGrade(TimeStampedModel):
+    """
+    A django model tracking persistent course grades.
+    """
+
+    class Meta(object):
+        # Indices:
+        # (course_id, user_id) for individual grades
+        # (course_id) for instructors to see all course grades
+        # (user_id) for course dashboard
+        unique_together = [
+            ('course_id', 'user_id'),
+        ]
+
+    # primary key will need to be large for this table
+    id = UnsignedBigIntAutoField(primary_key=True)  # pylint: disable=invalid-name
+
+    # uniquely identify this particular grade object
+    user_id = models.IntegerField(blank=False, db_index=True)
+    course_id = CourseKeyField(blank=False, max_length=255)
+
+    # Information relating to the state of content when grade was calculated
+    subtree_edited_timestamp = models.DateTimeField('last content edit timestamp', blank=False)
+    course_version = models.CharField(u'Guid of latest course version', blank=True, max_length=255)
+    grading_policy_hash = models.CharField(u'Hash of current grading policy', blank=False, max_length=255)
+
+    # Information about the course grade itself
+    percent_grade = models.FloatField(blank=False)
+    letter_grade = models.CharField(u'Letter grade for course', blank=False, max_length=255)
+
+    def __unicode__(self):
+        """
+        Returns a string representation of this model.
+        """
+        return u"{} user: {}, course version: {}, grading policy: {}, percent grade {}%, letter grade {}".format(
+            type(self).__name__,
+            self.user_id,
+            self.course_version,
+            self.grading_policy_hash,
+            self.percent_grade,
+            self.letter_grade,
+        )
+
+    @classmethod
+    def read_course_grade(cls, user_id, course_id):
+        """
+        Reads a grade from database
+
+        Arguments:
+            user_id: The user associated with the desired grade
+            course_id: The id of the course associated with the desired grade
+
+        Raises PersistentCourseGrade.DoesNotExist if applicable
+        """
+        return cls.objects.get(user_id=user_id, course_id=course_id)
+
+    @classmethod
+    def update_or_create_course_grade(cls, **kwargs):
+        """
+        Creates a course grade in the database.
+        Returns a PersistedCourseGrade object.
+        """
+        kwargs['course_version'] = kwargs.get('course_version', "")
+        user_id = kwargs.pop("user_id")
+        course_id = kwargs.pop("course_id")
+        grade, _ = cls.objects.update_or_create(
+            user_id=user_id,
+            course_id=course_id,
+            defaults=kwargs
+        )
+        return grade
