@@ -59,6 +59,7 @@
             'date': 'js/vendor/date',
             'moment': 'js/vendor/moment.min',
             'moment-with-locales': 'xmodule_js/common_static/js/vendor/moment-with-locales.min',
+            'moment-timezone': 'js/vendor/moment-timezone-with-data.min',
             'text': 'js/vendor/requirejs/text',
             'logger': 'js/src/logger',
             'backbone': 'common/js/vendor/backbone',
