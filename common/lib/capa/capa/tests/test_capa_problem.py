@@ -471,7 +471,7 @@ class CAPAMultiInputProblemTest(unittest.TestCase):
 
         Arguments:
             problme_html (str): problem HTML
-            group_label (str or None): multi input group lable of None if not present
+            group_label (str or None): multi input group label or None if label is not present
             input_labels (tuple): individual input labels
         """
         html = etree.XML(problme_html)
@@ -501,23 +501,15 @@ class CAPAMultiInputProblemTest(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        {'group_label_present': True},
-        {'group_label_present': False}
+        {'label_html': '<label>Choose the correct color</label>', 'group_label': 'Choose the correct color'},
+        {'label_html': '', 'group_label': None}
     )
-    def test_optionresponse(self, group_label_present):
+    def test_optionresponse(self, label_html, group_label):
         """
         Verify that optionresponse problem with multiple inputtypes is rendered correctly.
         """
-        group_label = 'Choose the correct color'
         input1_label = 'What color is the sky?'
         input2_label = 'What color are pine needles?'
-
-        label_html = ''
-        if group_label_present:
-            label_html = '<label>{}</label>'.format(group_label)
-        else:
-            group_label = None
-
         xml = """
         <problem>
             <optionresponse>
@@ -561,16 +553,19 @@ class CAPAMultiInputProblemTest(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        {'group_description_present': True},
-        {'group_description_present': False}
+        {
+            'descriptions': ('desc1', 'desc2'),
+            'descriptions_html': '<description>desc1</description><description>desc2</description>'
+        },
+        {
+            'descriptions': (),
+            'descriptions_html': ''
+        }
     )
-    def test_descriptions(self, group_description_present):
+    def test_descriptions(self, descriptions, descriptions_html):
         """
         Verify that groups descriptions are rendered correctly.
         """
-        descriptions = ('desc 101', 'desc 102')
-        descriptions_html = "<description>{}</description><description>{}</description>".format(*descriptions)
-
         xml = """
         <problem>
             <optionresponse>
@@ -580,19 +575,17 @@ class CAPAMultiInputProblemTest(unittest.TestCase):
                 <optioninput options="('yellow','blue','green')" correct="green" label="second label"/>
             </optionresponse>
         </problem>
-        """.format(descriptions_html=descriptions_html if group_description_present else '')
+        """.format(descriptions_html=descriptions_html)
         problem = self.capa_problem(xml)
         problem_html = etree.XML(problem.get_html())
 
         multi_inputs_group = problem_html.xpath('//div[@class="multi-inputs-group"]')[0]
         description_ids = multi_inputs_group.attrib.get('aria-describedby', '').split()
 
-        if group_description_present:
-            self.assertEqual(len(description_ids), len(descriptions))
-        else:
-            self.assertEqual(len(description_ids), 0)
+        # Verify that number of descriptions matches description_ids
+        self.assertEqual(len(description_ids), len(descriptions))
 
-        # for each description check its order and text is correct
+        # For each description, check its order and text is correct
         for index, description_id in enumerate(description_ids):
             description_element = multi_inputs_group.xpath('//p[@id="{}"]'.format(description_id))
             self.assertEqual(len(description_element), 1)
