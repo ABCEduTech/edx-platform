@@ -406,7 +406,7 @@ class PhotoVerification(StatusModel):
 
         Arguments:
             deadline (datetime): The date at which the verification was active
-                (created before and expired after).
+                (created before and expiration datetime is after today).
 
         Returns:
             bool
@@ -414,7 +414,7 @@ class PhotoVerification(StatusModel):
         """
         return (
             self.created_at < deadline and
-            self.expiration_datetime > deadline
+            self.expiration_datetime > datetime.now(pytz.UTC)
         )
 
     def parsed_error_msg(self):

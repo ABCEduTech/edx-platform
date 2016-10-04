@@ -116,7 +116,10 @@ def check_verify_status_by_course(user, course_enrollments):
             # Check whether the user was approved or is awaiting approval
             if relevant_verification is not None:
                 if relevant_verification.status == "approved":
-                    status = VERIFY_STATUS_APPROVED
+                    if SoftwareSecurePhotoVerification.is_verification_expiring_soon(expiration_datetime):
+                        status = VERIFY_STATUS_NEED_TO_REVERIFY
+                    else:
+                        status = VERIFY_STATUS_APPROVED
                 elif relevant_verification.status == "submitted":
                     status = VERIFY_STATUS_SUBMITTED
 
@@ -137,6 +140,8 @@ def check_verify_status_by_course(user, course_enrollments):
                             # is set to expire within "VERIFICATION_EXPIRATION_DAYS" days (default is 4 weeks).
                             # Tell the student to reverify.
                             status = VERIFY_STATUS_NEED_TO_REVERIFY
+                        else:
+                            status = VERIFY_STATUS_SUBMITTED
                     else:
                         status = VERIFY_STATUS_NEED_TO_VERIFY
                 else:

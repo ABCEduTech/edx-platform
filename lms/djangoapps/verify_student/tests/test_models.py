@@ -358,7 +358,7 @@ class TestPhotoVerification(MockS3Mixin, ModuleStoreTestCase):
             '[{"IdReasons": ["Not provided"]}]',
             '{"IdReasons": ["Not provided"]}',
             u'[{"ïḋṚëäṡöṅṡ": ["Ⓝⓞⓣ ⓟⓡⓞⓥⓘⓓⓔⓓ "]}]',
-        }
+            }
         for msg in bad_messages:
             attempt.error_msg = msg
             parsed_error_msg = attempt.parsed_error_msg()
@@ -382,8 +382,9 @@ class TestPhotoVerification(MockS3Mixin, ModuleStoreTestCase):
         self.assertTrue(attempt.active_at_datetime(before_expiration))
 
         # Not active after the expiration date
-        after = expiration + timedelta(seconds=1)
-        self.assertFalse(attempt.active_at_datetime(after))
+        attempt.created_at = attempt.created_at - timedelta(days=settings.VERIFY_STUDENT["DAYS_GOOD_FOR"])
+        attempt.save()
+        self.assertFalse(attempt.active_at_datetime(datetime.now(pytz.UTC) + timedelta(days=1)))
 
     def test_verification_for_datetime(self):
         user = UserFactory.create()
@@ -427,7 +428,9 @@ class TestPhotoVerification(MockS3Mixin, ModuleStoreTestCase):
         self.assertEqual(result, attempt)
 
         # Immediately after the expiration date, should not get the attempt
-        after = expiration + timedelta(seconds=1)
+        attempt.created_at = attempt.created_at - timedelta(days=settings.VERIFY_STUDENT["DAYS_GOOD_FOR"])
+        attempt.save()
+        after = datetime.now(pytz.UTC) + timedelta(days=1)
         query = SoftwareSecurePhotoVerification.objects.filter(user=user)
         result = SoftwareSecurePhotoVerification.verification_for_datetime(after, query)
         self.assertIs(result, None)
@@ -456,7 +459,7 @@ class TestPhotoVerification(MockS3Mixin, ModuleStoreTestCase):
         course = CourseFactory.create()
 
         with patch(
-            'lms.djangoapps.verify_student.models.SoftwareSecurePhotoVerification.user_is_verified'
+                'lms.djangoapps.verify_student.models.SoftwareSecurePhotoVerification.user_is_verified'
         ) as mock_verification:
 
             mock_verification.return_value = status
