@@ -22,6 +22,7 @@ from course_modes.models import CourseMode
 # we display on the student dashboard.
 VERIFY_STATUS_NEED_TO_VERIFY = "verify_need_to_verify"
 VERIFY_STATUS_SUBMITTED = "verify_submitted"
+VERIFY_STATUS_RESUBMITTED = "re_verify_submitted"
 VERIFY_STATUS_APPROVED = "verify_approved"
 VERIFY_STATUS_MISSED_DEADLINE = "verify_missed_deadline"
 VERIFY_STATUS_NEED_TO_REVERIFY = "verify_need_to_reverify"
@@ -39,6 +40,8 @@ def check_verify_status_by_course(user, course_enrollments):
     The possible statuses are:
         * VERIFY_STATUS_NEED_TO_VERIFY: The student has not yet submitted photos for verification.
         * VERIFY_STATUS_SUBMITTED: The student has submitted photos for verification,
+          but has have not yet been approved.
+        * VERIFY_STATUS_RESUBMITTED: The student has re-submitted photos for re-verification,
           but has have not yet been approved.
         * VERIFY_STATUS_APPROVED: The student has been successfully verified.
         * VERIFY_STATUS_MISSED_DEADLINE: The student did not submit photos within the course's deadline.
@@ -102,6 +105,10 @@ def check_verify_status_by_course(user, course_enrollments):
 
             relevant_verification = SoftwareSecurePhotoVerification.verification_for_datetime(deadline, verifications)
 
+            verification_expiring_soon = False
+            if SoftwareSecurePhotoVerification.is_verification_expiring_soon(expiration_datetime):
+                verification_expiring_soon = True
+
             # Picking the max verification datetime on each iteration only with approved status
             if relevant_verification is not None and relevant_verification.status == "approved":
                 recent_verification_datetime = max(
@@ -116,12 +123,15 @@ def check_verify_status_by_course(user, course_enrollments):
             # Check whether the user was approved or is awaiting approval
             if relevant_verification is not None:
                 if relevant_verification.status == "approved":
-                    if SoftwareSecurePhotoVerification.is_verification_expiring_soon(expiration_datetime):
+                    if verification_expiring_soon:
                         status = VERIFY_STATUS_NEED_TO_REVERIFY
                     else:
                         status = VERIFY_STATUS_APPROVED
                 elif relevant_verification.status == "submitted":
-                    status = VERIFY_STATUS_SUBMITTED
+                    if verification_expiring_soon:
+                        status = VERIFY_STATUS_RESUBMITTED
+                    else:
+                        status = VERIFY_STATUS_SUBMITTED
 
             # If the user didn't submit at all, then tell them they need to verify
             # If the deadline has already passed, then tell them they missed it.
@@ -141,7 +151,10 @@ def check_verify_status_by_course(user, course_enrollments):
                             # Tell the student to reverify.
                             status = VERIFY_STATUS_NEED_TO_REVERIFY
                         else:
-                            status = VERIFY_STATUS_SUBMITTED
+                            if verification_expiring_soon:
+                                status = VERIFY_STATUS_RESUBMITTED
+                            else:
+                                status = VERIFY_STATUS_SUBMITTED
                     else:
                         status = VERIFY_STATUS_NEED_TO_VERIFY
                 else:
