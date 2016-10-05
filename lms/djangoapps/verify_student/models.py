@@ -971,11 +971,12 @@ class SoftwareSecurePhotoVerification(PhotoVerification):
         """
         Returns True if verification is expiring within VERIFICATION_EXPIRATION_DAYS.
         """
-        if (expiration_datetime - datetime.now(pytz.UTC)).days <= settings.VERIFY_STUDENT.get(
-                "VERIFICATION_EXPIRATION_DAYS", 28):
-            return True
-        else:
-            return False
+        if expiration_datetime:
+            if (expiration_datetime - datetime.now(pytz.UTC)).days <= settings.VERIFY_STUDENT.get(
+                    "VERIFICATION_EXPIRATION_DAYS", 28):
+                return True
+
+        return False
 
 
 class VerificationDeadline(TimeStampedModel):
